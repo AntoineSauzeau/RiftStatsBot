@@ -34,14 +34,48 @@ module.exports.getParentRegion = (region) => {
 
 module.exports.FetchGameDataFromList = async (lolApi, l_game_id, parent_region) => {
 
-    l_game_data = []
-    l_game_id.forEach((game_id) => {
-
-        lolApi.pget(parent_region, 'match.getMatch', game_id).then(data => {
-            l_game__data.append(data)
-            console.log(data)
+    let l_game_data = []
+    for (let game_id of l_game_id){
+        await lolApi.get(parent_region, 'match.getMatch', game_id).then(data => {
+            l_game_data.push(data)
         })
-    });
+    };
 
     return l_game_data
+}
+
+module.exports.GetPlayerDataFromGameData = (player_name, game_data) => {
+
+    for (player_data of game_data.info.participants){
+        if(player_data.summonerName == player_name){
+            return player_data
+        }
+    }
+}
+
+module.exports.GetAllPlayedMatchIdsLastMonth = async (lolApi, puuid, region) => {
+
+    let index = 0
+    let l_game_ids = []
+
+    let n_match_found = 0
+    do{
+        console.log(puuid, region, (Math.floor(Date.now()/1000))-30*24*60*60)
+        n_match_found = 0
+        await lolApi.get(region, 'match.getMatchIdsByPUUID', puuid, {
+            startTime: Math.floor(Date.now()/1000)-30*24*60*60,
+            endTime: Math.floor(Date.now()/1000),
+            count: 100
+        }).then(data => {
+            l_game_ids = l_game_ids.concat(data)
+            n_match_found = data.length
+        })
+
+        index += n_match_found
+
+    } while(n_match_found == 100);
+
+    console.log(l_game_ids)
+
+    return l_game_ids
 }
