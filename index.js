@@ -5,6 +5,7 @@ const { exit } = require('process');
 const sqlite3 = require('sqlite3');
 const TeemoJS = require('teemojs')
 const Fs = require('fs')
+const DbUtils = require('./utils/DbUtils')
 
 const client = new Client({
     intents: ['GUILDS', 'DIRECT_MESSAGES', 'GUILD_MESSAGES'],
@@ -36,6 +37,8 @@ client.db = new sqlite3.Database('database.db', (err) => {
         client.db.run(create_request)
     }
 });
+
+DbUtils.AddAlternativePromiseFunctions(client.db)
 
 
 

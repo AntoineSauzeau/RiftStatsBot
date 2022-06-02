@@ -8,7 +8,8 @@ module.exports = {
     run(client, message, args) {
         
         const res = new MessageEmbed()
-        res.setTitle("Commands")
+        .setTitle("Commands")
+        .setColor('#16a085')
 
         let page = 0
         let cmd_index = 0
