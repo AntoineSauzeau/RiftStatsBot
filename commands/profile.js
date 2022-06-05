@@ -1,6 +1,7 @@
 const { MessageEmbed } = require('discord.js')
 const LolApiUtils = require('../utils/LolApiUtils')
 const LolStatsUtils = require('../utils/LolStatsUtils')
+const EmojiDiscordIds = require('../emoji_discord_ids.json')
 
 module.exports = {
     name: "profile",
@@ -9,7 +10,7 @@ module.exports = {
 
         const res = new MessageEmbed()
         
-        let username_lol, region
+        let username_lol, region, summoner_id
         await client.db.pget("SELECT region, username_lol FROM Users WHERE user_discord_id=?", {
             1: message.author.id
         }
@@ -22,30 +23,68 @@ module.exports = {
             return
         });
 
+        console.log(username_lol)
+
         await client.lolApi.get(region, 'summoner.getBySummonerName', username_lol).then(data => {
             console.log(data)
             puuid = data.puuid
+            summoner_id = data.id
         })
 
         let l_game_id
         const parent_region = LolApiUtils.getParentRegion(region)
-        /*await client.lolApi.get(parent_region, 'match.getMatchIdsByPUUID', puuid).then(data => {
-            l_game_id = data
-            console.log(data)
-        })*/
-
+        
         l_game_id = await LolApiUtils.GetAllPlayedMatchIdsLastMonth(client.lolApi, puuid, parent_region);
-
+        
         let l_game_data = await LolApiUtils.FetchGameDataFromList(client.lolApi, l_game_id, parent_region)
-        //console.log(l_game_data)
+        
+        const win_stats = LolStatsUtils.GetPlayerGlobalWinrate(username_lol, l_game_data)
+        const preferredRoles = LolStatsUtils.GetPlayerPreferredRoles(username_lol, l_game_data)
+        const averageCs = LolStatsUtils.GetPlayerAverageCsKilledPerMin(username_lol, l_game_data)
+        const averageKills = LolStatsUtils.GetPlayerAverageKillsPerMatch(username_lol, l_game_data)
+        const averageDeaths = LolStatsUtils.GetPlayerAverageDeathsPerMatch(username_lol, l_game_data)
+        const averageAssists = LolStatsUtils.GetPlayerAverageAssistsPerMatch(username_lol, l_game_data)
+        const mostPlayedChamps = await LolStatsUtils.GetPlayerMostPlayedChamps(username_lol, l_game_data)
 
-        const win_stats = LolStatsUtils.getPlayerWinrate(username_lol, l_game_data)
-        console.log(win_stats)
+        const lRankModeData = await LolApiUtils.GetPlayerRankData(client.lolApi, summoner_id, region)
+
+        console.log(preferredRoles)
+        console.log(averageCs)
 
         res.setTitle(username_lol + "'s profile")
-        .addField("Games played :", (win_stats.n_lose+win_stats.n_win).toString(), true)
+        .addField("Games played (last 30 days) :", (win_stats.n_lose+win_stats.n_win).toString(), true)
         .addField("Winrate :", win_stats.winrate + "% ("+win_stats.n_win+"W, "+win_stats.n_lose+"L)", true)
-        .setColor('#16a085')
+        .addField("Roles :", "1: " + preferredRoles[0][0] + " (" + Math.round((preferredRoles[0][1]/l_game_id.length)*100) + "%), " + "2: " + preferredRoles[1][0] + " (" + Math.round((preferredRoles[1][1]/l_game_id.length)*100) + "%)")
+        .addField("Average cs ", ""+averageCs+" cs/min")
+        .addField("Average KDA :", averageKills+"/"+averageDeaths+"/"+averageAssists)
+
+        for(const rankModeApiName in lRankModeData){
+
+            let rankModeName
+            if(rankModeApiName == "RANKED_FLEX_SR"){
+                rankModeName = "Ranked Flex"
+            }
+            else if(rankModeApiName == "RANKED_SOLO_5x5"){
+                rankModeName = "Ranked Solo/Duo"
+            }
+
+            if(lRankModeData[rankModeApiName] == null){
+                res.addField(rankModeName, "Unranked")
+                continue
+            }
+
+            let rankModeData = lRankModeData[rankModeApiName]
+            let winrate = Math.round((rankModeData.wins / (rankModeData.wins + rankModeData.losses)) * 100)
+
+            let tierDisplayName = rankModeData.tier.toLowerCase()
+            tierDisplayName = tierDisplayName[0].toUpperCase() + tierDisplayName.slice(1)
+
+            tierEmojiId = EmojiDiscordIds["Emblem_"+tierDisplayName+"_lol"]
+
+            res.addField(rankModeName, tierEmojiId + " " + tierDisplayName + " " + rankModeData.rank + ", " + rankModeData.leaguePoints + "LP | " + winrate + "% (" + rankModeData.wins + "W " + rankModeData.losses + "L)")
+        }
+
+        res.setColor('#16a085')
 
         message.channel.send({ embeds: [res] });
 

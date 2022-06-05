@@ -7,7 +7,7 @@ module.exports = {
     async run(client, message, args) {
         console.log(args)
 
-        const username = args.slice(2).join(' ')
+        let username = args.slice(2).join(' ')
         console.log(username)
 
         const region = LolApiUtils.getValidRegionName(args[1])
@@ -22,12 +22,15 @@ module.exports = {
                 message.channel.send("Unable to find the account. Check username and region.")
                 return
             }
+
+            //The user found with the api search may have a slightly different name than the one given
+            username = data.name
+
+            console.log("dsqdqs" + region + username + message.author.id)
             
             //We check that the account is not already associated
-            client.db.get("SELECT username_lol FROM Users WHERE user_discord_id=$user_discord_id", {
-                $user_discord_id: message.author.id,
-                $region: region,
-                $username_lol: username
+            client.db.get("SELECT username_lol, region FROM Users WHERE user_discord_id=$user_discord_id", {
+                $user_discord_id: message.author.id
             }, (err, row) => {
                 if(err != null){
                     console.log(err)
@@ -45,7 +48,7 @@ module.exports = {
                     else{
 
                         //If the user has already been associated with a different account, we update to put the new account
-                        client.db.run("UPDATE Users SET username_lol=$username AND region=$region WHERE user_discord_id=$user_discord_id", {
+                        client.db.run("UPDATE Users SET username_lol=$username, region=$region WHERE user_discord_id=$user_discord_id", {
                             $user_discord_id: message.author.id,
                             $region: region,
                             $username: username

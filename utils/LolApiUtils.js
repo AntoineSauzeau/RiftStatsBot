@@ -59,13 +59,13 @@ module.exports.GetAllPlayedMatchIdsLastMonth = async (lolApi, puuid, region) => 
     let l_game_ids = []
 
     let n_match_found = 0
-    do{
-        console.log(puuid, region, (Math.floor(Date.now()/1000))-30*24*60*60)
+    do {
         n_match_found = 0
         await lolApi.get(region, 'match.getMatchIdsByPUUID', puuid, {
             startTime: Math.floor(Date.now()/1000)-30*24*60*60,
             endTime: Math.floor(Date.now()/1000),
-            count: 100
+            count: 100,
+            start: index
         }).then(data => {
             l_game_ids = l_game_ids.concat(data)
             n_match_found = data.length
@@ -79,3 +79,19 @@ module.exports.GetAllPlayedMatchIdsLastMonth = async (lolApi, puuid, region) => 
 
     return l_game_ids
 }
+
+module.exports.GetPlayerRankData = async (lolApi, summoner_id, region) => {
+
+    lRankData = {"RANKED_FLEX_SR": null, "RANKED_SOLO_5x5": null}
+
+    await lolApi.get(region, 'league.getLeagueEntriesForSummoner', summoner_id).then(data => {
+        for(rankModeData of data){
+            lRankData[rankModeData.queueType] = rankModeData
+        }
+    })
+
+    console.log(lRankData)
+
+    return lRankData
+}
+
