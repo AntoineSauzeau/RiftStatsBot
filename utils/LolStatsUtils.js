@@ -45,7 +45,6 @@ module.exports.GetPlayerPreferredRoles = (playerName, lGameData) => {
         }
     }
 
-    console.log(lRoleFrequency)
 
     for(let index = 1; index < lRoleFrequency.length; index += 1){
         let currentItem = lRoleFrequency[index].slice()
@@ -73,6 +72,7 @@ module.exports.GetPlayerAverageCsKilledPerMin = (playerName, lGameData) => {
 
         const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
         csKilled += playerData.totalMinionsKilled
+        console.log(playerData.totalMinionsKilled)
         timePlayed += gameData.info.gameDuration
     }
 
@@ -129,8 +129,8 @@ module.exports.GetPlayerMostPlayedChamps = async (playerName, lGameData) => {
         champsData = json.data
     });
 
-    for (champ in champsData) {
-        lChamp[champsData[champ].name] = 0
+    for (let champ in champsData) {
+        lChamp[champ] = 0
     }
 
     for(const gameData of lGameData) {
@@ -138,8 +138,83 @@ module.exports.GetPlayerMostPlayedChamps = async (playerName, lGameData) => {
         lChamp[playerData.championName] += 1
     }
 
-    console.log(lChamp)
-    return lChamp
+    let lChampSorted = []
+    for(const [champName, nTimePlayed] of Object.entries(lChamp)){
+        lChampSorted.push([champName, nTimePlayed])
+    }
+
+    for(let index = 1; index < lChampSorted.length; index += 1){
+        let currentItem = lChampSorted[index].slice()
+        let currentLeftIndex = index-1
+
+        while(currentLeftIndex >= 0 && lChampSorted[currentLeftIndex][1] < currentItem[1]){
+            lChampSorted[currentLeftIndex+1][0] = lChampSorted[currentLeftIndex][0]
+            lChampSorted[currentLeftIndex+1][1] = lChampSorted[currentLeftIndex][1]
+            currentLeftIndex -= 1
+        }
+
+        lChampSorted[currentLeftIndex+1][0] = currentItem[0]
+        lChampSorted[currentLeftIndex+1][1] = currentItem[1]
+    }
+
+    console.log(lChampSorted)
+    return lChampSorted
 
 }
+
+module.exports.GetPlayerWinDataWithSpecificChamp = (playerName, lGameData, championName) => {
+
+    champWinData = {
+        nWin: 0,
+        nLose: 0,
+        winrate: 0
+    }
+
+    for(const gameData of lGameData) {
+        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        if(playerData.championName == championName){
+            if(playerData.win){
+                champWinData.nWin += 1
+            }
+            else {
+                champWinData.nLose += 1
+            }
+        }
+    }
+
+    champWinData.winrate = Math.round((champWinData.nWin / (champWinData.nWin + champWinData.nLose))*100)
+
+    return champWinData
+}
+
+module.exports.GetPlayerKdaDataWithSpecificChamp = (playerName, lGameData, championName) => {
+
+    let nTotalKill = 0
+    let nTotalDeath = 0
+    let nTotalAssist = 0
+
+    champKdaData = {
+        kda: 0,
+        nKill: 0,
+        nDeath: 0,
+        nAssist: 0
+    }
+
+    for(const gameData of lGameData) {
+        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        if(playerData.championName == championName){
+            nTotalKill += playerData.kills
+            nTotalDeath += playerData.deaths
+            nTotalAssist += playerData.assists
+        }
+    }
+
+    champKdaData.nKill = Math.round((nTotalKill / lGameData.length) * 10) / 10
+    champKdaData.nDeath = Math.round((nTotalDeath / lGameData.length) * 10) / 10
+    champKdaData.nAssist = Math.round((nTotalAssist / lGameData.length) * 10) / 10
+    champKdaData.kda = Math.round(((champKdaData.nKill + champKdaData.nAssist) / champKdaData.nDeath) * 100) / 100
+
+    return champKdaData
+}
+
 //https://emoji.gg/emoji/8176-wr-jungle

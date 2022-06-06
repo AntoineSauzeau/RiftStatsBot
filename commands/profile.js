@@ -10,12 +10,12 @@ module.exports = {
 
         const res = new MessageEmbed()
         
-        let username_lol, region, summoner_id
+        let UsernameLol, region, summoner_id
         await client.db.pget("SELECT region, username_lol FROM Users WHERE user_discord_id=?", {
             1: message.author.id
         }
         ).then((row) => {
-            username_lol = row.username_lol
+            UsernameLol = row.username_lol
             region = row.region
         }
         ).catch((err) => {
@@ -23,9 +23,9 @@ module.exports = {
             return
         });
 
-        console.log(username_lol)
+        console.log(UsernameLol)
 
-        await client.lolApi.get(region, 'summoner.getBySummonerName', username_lol).then(data => {
+        await client.lolApi.get(region, 'summoner.getBySummonerName', UsernameLol).then(data => {
             console.log(data)
             puuid = data.puuid
             summoner_id = data.id
@@ -36,22 +36,22 @@ module.exports = {
         
         l_game_id = await LolApiUtils.GetAllPlayedMatchIdsLastMonth(client.lolApi, puuid, parent_region);
         
-        let l_game_data = await LolApiUtils.FetchGameDataFromList(client.lolApi, l_game_id, parent_region)
+        let lGameData = await LolApiUtils.FetchGameDataFromList(client.lolApi, l_game_id, parent_region)
         
-        const win_stats = LolStatsUtils.GetPlayerGlobalWinrate(username_lol, l_game_data)
-        const preferredRoles = LolStatsUtils.GetPlayerPreferredRoles(username_lol, l_game_data)
-        const averageCs = LolStatsUtils.GetPlayerAverageCsKilledPerMin(username_lol, l_game_data)
-        const averageKills = LolStatsUtils.GetPlayerAverageKillsPerMatch(username_lol, l_game_data)
-        const averageDeaths = LolStatsUtils.GetPlayerAverageDeathsPerMatch(username_lol, l_game_data)
-        const averageAssists = LolStatsUtils.GetPlayerAverageAssistsPerMatch(username_lol, l_game_data)
-        const mostPlayedChamps = await LolStatsUtils.GetPlayerMostPlayedChamps(username_lol, l_game_data)
+        const win_stats = LolStatsUtils.GetPlayerGlobalWinrate(UsernameLol, lGameData)
+        const preferredRoles = LolStatsUtils.GetPlayerPreferredRoles(UsernameLol, lGameData)
+        const averageCs = LolStatsUtils.GetPlayerAverageCsKilledPerMin(UsernameLol, lGameData)
+        const averageKills = LolStatsUtils.GetPlayerAverageKillsPerMatch(UsernameLol, lGameData)
+        const averageDeaths = LolStatsUtils.GetPlayerAverageDeathsPerMatch(UsernameLol, lGameData)
+        const averageAssists = LolStatsUtils.GetPlayerAverageAssistsPerMatch(UsernameLol, lGameData)
+        const mostPlayedChamps = await LolStatsUtils.GetPlayerMostPlayedChamps(UsernameLol, lGameData)
 
         const lRankModeData = await LolApiUtils.GetPlayerRankData(client.lolApi, summoner_id, region)
 
         console.log(preferredRoles)
         console.log(averageCs)
 
-        res.setTitle(username_lol + "'s profile")
+        res.setTitle(UsernameLol + "'s profile")
         .addField("Games played (last 30 days) :", (win_stats.n_lose+win_stats.n_win).toString(), true)
         .addField("Winrate :", win_stats.winrate + "% ("+win_stats.n_win+"W, "+win_stats.n_lose+"L)", true)
         .addField("Roles :", "1: " + preferredRoles[0][0] + " (" + Math.round((preferredRoles[0][1]/l_game_id.length)*100) + "%), " + "2: " + preferredRoles[1][0] + " (" + Math.round((preferredRoles[1][1]/l_game_id.length)*100) + "%)")
@@ -83,6 +83,18 @@ module.exports = {
 
             res.addField(rankModeName, tierEmojiId + " " + tierDisplayName + " " + rankModeData.rank + ", " + rankModeData.leaguePoints + "LP | " + winrate + "% (" + rankModeData.wins + "W " + rankModeData.losses + "L)")
         }
+
+        let preferredChampsFieldValue = ""
+        for(let i = 0; i < 3; i++){
+            const champName = mostPlayedChamps[i][0]
+            const nTimePlayed =  mostPlayedChamps[i][1]
+
+            const playerChampWinData = LolStatsUtils.GetPlayerWinDataWithSpecificChamp(UsernameLol, lGameData, champName)
+            const playerChampKdaData = LolStatsUtils.GetPlayerKdaDataWithSpecificChamp(UsernameLol, lGameData, champName)
+            preferredChampsFieldValue += "\n" + playerChampWinData.winrate + "% (" + playerChampWinData.nWin + "W " + playerChampWinData.nLose + "L) " + playerChampKdaData.kda + "KDA"
+        }
+
+        res.addField("Preferred champions :", preferredChampsFieldValue)
 
         res.setColor('#16a085')
 
