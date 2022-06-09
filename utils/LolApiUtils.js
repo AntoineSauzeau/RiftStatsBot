@@ -95,3 +95,12 @@ module.exports.GetPlayerRankData = async (lolApi, summoner_id, region) => {
     return lRankData
 }
 
+module.exports.GetCurrentGameData = async (lolApi, summonerId, Region) => {
+
+    await lolApi.get(region, 'spectator.getCurrentGameInfoBySummoner', summonerId).then(data => {
+        for(rankModeData of data){
+            lRankData[rankModeData.queueType] = rankModeData
+        }
+    })
+}
+

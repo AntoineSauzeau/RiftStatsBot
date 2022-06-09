@@ -55,17 +55,17 @@ module.exports = {
         .addField("Games played (last 30 days) :", (win_stats.n_lose+win_stats.n_win).toString(), true)
         .addField("Winrate :", win_stats.winrate + "% ("+win_stats.n_win+"W, "+win_stats.n_lose+"L)", true)
         .addField("Roles :", "1: " + preferredRoles[0][0] + " (" + Math.round((preferredRoles[0][1]/l_game_id.length)*100) + "%), " + "2: " + preferredRoles[1][0] + " (" + Math.round((preferredRoles[1][1]/l_game_id.length)*100) + "%)")
-        .addField("Average cs ", ""+averageCs+" cs/min")
+        .addField("Average cs :", ""+averageCs+" cs/min")
         .addField("Average KDA :", averageKills+"/"+averageDeaths+"/"+averageAssists)
 
         for(const rankModeApiName in lRankModeData){
 
             let rankModeName
             if(rankModeApiName == "RANKED_FLEX_SR"){
-                rankModeName = "Ranked Flex"
+                rankModeName = "Ranked Flex :"
             }
             else if(rankModeApiName == "RANKED_SOLO_5x5"){
-                rankModeName = "Ranked Solo/Duo"
+                rankModeName = "Ranked Solo/Duo :"
             }
 
             if(lRankModeData[rankModeApiName] == null){
@@ -79,7 +79,7 @@ module.exports = {
             let tierDisplayName = rankModeData.tier.toLowerCase()
             tierDisplayName = tierDisplayName[0].toUpperCase() + tierDisplayName.slice(1)
 
-            tierEmojiId = EmojiDiscordIds["Emblem_"+tierDisplayName+"_lol"]
+            tierEmojiId = EmojiDiscordIds["Emblems"]["Emblem_"+tierDisplayName+"_lol"]
 
             res.addField(rankModeName, tierEmojiId + " " + tierDisplayName + " " + rankModeData.rank + ", " + rankModeData.leaguePoints + "LP | " + winrate + "% (" + rankModeData.wins + "W " + rankModeData.losses + "L)")
         }
@@ -91,7 +91,7 @@ module.exports = {
 
             const playerChampWinData = LolStatsUtils.GetPlayerWinDataWithSpecificChamp(UsernameLol, lGameData, champName)
             const playerChampKdaData = LolStatsUtils.GetPlayerKdaDataWithSpecificChamp(UsernameLol, lGameData, champName)
-            preferredChampsFieldValue += "\n" + playerChampWinData.winrate + "% (" + playerChampWinData.nWin + "W " + playerChampWinData.nLose + "L) " + playerChampKdaData.kda + "KDA"
+            preferredChampsFieldValue += "\n" + EmojiDiscordIds["Champions"]["champ_"+champName+"_lol"] + " " + playerChampWinData.winrate + "% (" + playerChampWinData.nWin + "W " + playerChampWinData.nLose + "L) " + playerChampKdaData.kda + " KDA"
         }
 
         res.addField("Preferred champions :", preferredChampsFieldValue)
