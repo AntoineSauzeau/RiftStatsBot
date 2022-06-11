@@ -1,3 +1,5 @@
+const Fetch = require('node-fetch')
+
 const l_region = ['br1', 'eun1', 'euw1', 'jp1', 'kr', 'la1', 'la2', 'na1', 'oc1', 'tr1', 'ru']
 
 module.exports.getValidRegionName = (region) => {
@@ -44,15 +46,6 @@ module.exports.FetchGameDataFromList = async (lolApi, l_game_id, parent_region) 
     return l_game_data
 }
 
-module.exports.GetPlayerDataFromGameData = (player_name, game_data) => {
-
-    for (player_data of game_data.info.participants){
-        if(player_data.summonerName == player_name){
-            return player_data
-        }
-    }
-}
-
 module.exports.GetAllPlayedMatchIdsLastMonth = async (lolApi, puuid, region) => {
 
     let index = 0
@@ -95,12 +88,36 @@ module.exports.GetPlayerRankData = async (lolApi, summoner_id, region) => {
     return lRankData
 }
 
-module.exports.GetCurrentGameData = async (lolApi, summonerId, Region) => {
+module.exports.GetCurrentGameData = async (lolApi, summonerId, region) => {
+
+    console.log(region + summonerId)
 
     await lolApi.get(region, 'spectator.getCurrentGameInfoBySummoner', summonerId).then(data => {
-        for(rankModeData of data){
-            lRankData[rankModeData.queueType] = rankModeData
-        }
+        console.log(data)
+        return data
+    }).catch(err => {
+        console.log(err)
     })
 }
 
+module.exports.GetChampionNameFromId = async (id) => {
+
+    let urlChampsData = "http://ddragon.leagueoflegends.com/cdn/12.10.1/data/en_US/champion.json"
+    let settings = {method: "GET"}
+
+    await fetch(urlChampsData, settings)
+    .then(res => res.json())
+    .then((json) => {
+
+        console.log(json)
+
+        let champsData = json.data
+
+        for (let i in champsData){
+
+            if(champsData[i].key == id){
+                return champsData[i].name
+            }
+        }
+    });
+}

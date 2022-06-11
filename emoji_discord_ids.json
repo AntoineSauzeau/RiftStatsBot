@@ -170,5 +170,15 @@
     "champ_Zilean_lol": "<:champ_Zilean_lol:984599064744181771>",
     "champ_Zoe_lol": "<:champ_Zoe_lol:984599072755314738>",
     "champ_Zyra_lol": "<:champ_Zyra_lol:984599077855588372>"
+  },
+  "Roles": {
+    "position_adc_lol": "<:position_bot_lol:985281099498397698>",
+    "position_support_lol": "<:position_support_lol:985281103361376417>",
+    "position_jungle_lol": "<:position_jungle_lol:985281100853182524>",
+    "position_mid_lol": "<:position_mid_lol:985281102228897842>",
+    "position_top_lol": "<:position_top_lol:985281104535748638>"
+  },
+  "Miscellaneous": {
+    
   }
 }

@@ -2,6 +2,8 @@ const { MessageEmbed } = require('discord.js')
 const LolApiUtils = require('../utils/LolApiUtils')
 const LolStatsUtils = require('../utils/LolStatsUtils')
 const EmojiDiscordIds = require('../emoji_discord_ids.json')
+const TimeUtils = require('../utils/TimeUtils')
+const CommandsUtils = require('../utils/CommandsUtils')
 
 module.exports = {
     name: "profile",
@@ -10,7 +12,7 @@ module.exports = {
 
         const res = new MessageEmbed()
         
-        let UsernameLol, region, summoner_id
+        let UsernameLol, region, summonerId, profileIconId
         await client.db.pget("SELECT region, username_lol FROM Users WHERE user_discord_id=?", {
             1: message.author.id
         }
@@ -28,7 +30,8 @@ module.exports = {
         await client.lolApi.get(region, 'summoner.getBySummonerName', UsernameLol).then(data => {
             console.log(data)
             puuid = data.puuid
-            summoner_id = data.id
+            summonerId = data.id
+            profileIconId = data.profileIconId
         })
 
         let l_game_id
@@ -46,15 +49,26 @@ module.exports = {
         const averageAssists = LolStatsUtils.GetPlayerAverageAssistsPerMatch(UsernameLol, lGameData)
         const mostPlayedChamps = await LolStatsUtils.GetPlayerMostPlayedChamps(UsernameLol, lGameData)
 
-        const lRankModeData = await LolApiUtils.GetPlayerRankData(client.lolApi, summoner_id, region)
+        const lRankModeData = await LolApiUtils.GetPlayerRankData(client.lolApi, summonerId, region)
 
         console.log(preferredRoles)
         console.log(averageCs)
 
         res.setTitle(UsernameLol + "'s profile")
-        .addField("Games played (last 30 days) :", (win_stats.n_lose+win_stats.n_win).toString(), true)
+
+        let playedTime = LolStatsUtils.GetTimePlayed(lGameData)
+        res.addField("Games played (last 30 days) :", (win_stats.n_lose+win_stats.n_win).toString() + " (" + playedTime + ")", true)
+
         .addField("Winrate :", win_stats.winrate + "% ("+win_stats.n_win+"W, "+win_stats.n_lose+"L)", true)
-        .addField("Roles :", "1: " + preferredRoles[0][0] + " (" + Math.round((preferredRoles[0][1]/l_game_id.length)*100) + "%), " + "2: " + preferredRoles[1][0] + " (" + Math.round((preferredRoles[1][1]/l_game_id.length)*100) + "%)")
+
+        console.log(LolStatsUtils.GetTimePlayed(lGameData))
+
+        let roleFieldValue = ""
+        for(let i = 0; i < 3; i++){
+            roleFieldValue += EmojiDiscordIds["Roles"]["position_" + preferredRoles[i][0] + "_lol"] + " " + (i+1) + ") " + preferredRoles[i][0] + " (" + Math.round((preferredRoles[i][1]/l_game_id.length)*100) + "%)\n"
+        }
+        res.addField("Roles :", roleFieldValue)
+        
         .addField("Average cs :", ""+averageCs+" cs/min")
         .addField("Average KDA :", averageKills+"/"+averageDeaths+"/"+averageAssists)
 
@@ -91,12 +105,27 @@ module.exports = {
 
             const playerChampWinData = LolStatsUtils.GetPlayerWinDataWithSpecificChamp(UsernameLol, lGameData, champName)
             const playerChampKdaData = LolStatsUtils.GetPlayerKdaDataWithSpecificChamp(UsernameLol, lGameData, champName)
-            preferredChampsFieldValue += "\n" + EmojiDiscordIds["Champions"]["champ_"+champName+"_lol"] + " " + playerChampWinData.winrate + "% (" + playerChampWinData.nWin + "W " + playerChampWinData.nLose + "L) " + playerChampKdaData.kda + " KDA"
+            preferredChampsFieldValue += "\n" + EmojiDiscordIds["Champions"]["champ_"+champName+"_lol"] + " " + (i+1) + ") " + champName + ": " + playerChampWinData.winrate + "% (" + playerChampWinData.nWin + "W " + playerChampWinData.nLose + "L) " + playerChampKdaData.kda + " KDA"
         }
 
         res.addField("Preferred champions :", preferredChampsFieldValue)
 
+        let currentGameFieldValue = ""
+        let currentGameData = await LolApiUtils.GetCurrentGameData(client.lolApi, summonerId, region)
+        if(currentGameData == null){
+            currentGameFieldValue = "No game in progress"
+        }
+        else{
+            let playerData = LolStatsUtils.GetPlayerDataFromGameData(UsernameLol, currentGameData.participants)
+            currentGameFieldValue = currentGameData.gameMode + " Game with " + await LolApiUtils.GetChampionNameFromId(currentGameData.championId)
+        }
+
+        res.addField("Game in progress :", currentGameFieldValue)
+
+        res.setThumbnail("http://ddragon.leagueoflegends.com/cdn/12.10.1/img/profileicon/"+profileIconId+".png")
         res.setColor('#16a085')
+
+        CommandsUtils.SetResponseEmbedDefaultValues(message, res)
 
         message.channel.send({ embeds: [res] });
 

@@ -60,15 +60,11 @@ client.on("ready", async () => {console.log("s")
             console.log(err)
         })
 
-        console.log("t")
         guild.emojis.create("http://ddragon.leagueoflegends.com/cdn/12.10.1/img/champion/" + champName + ".png", "champ_"+champName+"_lol").then(emoji => {
 
             emojiDiscordIds["Champions"]["champ_"+champName+"_lol"] = "<:" + emoji.name + ":" + emoji.id + ">"
-            console.log(emojiDiscordIds)
-            console.log(emoji.id)
 
             EmojiCreated += 1
-            console.log(EmojiCreated)
 
             if(EmojiCreated == Object.keys(champsData).length) {
                 Fs.open("emoji_discord_ids.json", 'w', (err, fd) => {
@@ -76,8 +72,6 @@ client.on("ready", async () => {console.log("s")
                         console.log(err)
                         return
                     }
-            
-                    console.log("d")
             
                     Fs.write(fd, JSON.stringify(emojiDiscordIds, null, 2), err => {
                         console.log(err)
@@ -98,19 +92,31 @@ client.on("ready", async () => {console.log("s")
             EmojiIndex += 1
         }
     }
+
+    let localEmojis = [["position_adc_lol", "Position_Master-Bot.png"], ["position_support_lol", "Position_Master-Support.png"], ["position_mid_lol", "Position_Master-Mid.png"], ["position_top_lol", "Position_Master-Top.png"], ["position_jungle_lol", "Position_Master-Jungle.png"]]
+    for(let [name, path] of localEmojis){
+
+        let guild
+        await client.guilds.fetch(guildIds[guildIndex]).then(p_guild => {
+            guild = p_guild
+        }).catch(err => {
+            console.log(err)
+        })
+
+        guild.emojis.create("./assets/emojis/" + path, name).then(emoji => {
+            emojiDiscordIds["Roles"][name] = "<:" + emoji.name + ":" + emoji.id + ">"
+        }).catch(err => {
+            console.log(err)
+        })
+
+        if(EmojiIndex == 49){
+            EmojiIndex = 0
+            guildIndex += 1
+        }
+        else{
+            EmojiIndex += 1
+        }
+    }
 })
 
-
-
-async function AddEmojiToGuild(guild, attachments, name_, options) {
-    return new Promise((resolve, reject) => {
-        guild.emojis.create(attachments, name_, options).then(emoji => {
-            console.log("d")
-            resolve(emoji)
-        }).catch(err => {
-            console.log("f")
-            reject(err)
-        })
-    })
-}
 

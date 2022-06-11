@@ -1,12 +1,22 @@
 const LolApiUtils = require('./LolApiUtils')
 const Fetch = require('node-fetch')
+const TimeUtils = require('./TimeUtils')
+
+module.exports.GetPlayerDataFromGameData = (PlayerName, participantsData) => {
+
+    for (PlayerData of participantsData){
+        if(PlayerData.summonerName == PlayerName){
+            return PlayerData
+        }
+    }
+}
 
 module.exports.GetPlayerGlobalWinrate = (playerName, lGameData) => {
 
     let n_win = 0, n_lose = 0
     for(const gameData of lGameData) {
     
-        if(LolApiUtils.GetPlayerDataFromGameData(playerName, gameData).win){
+        if(module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants).win){
             n_win++
         }
         else{
@@ -27,7 +37,7 @@ module.exports.GetPlayerPreferredRoles = (playerName, lGameData) => {
     let lRoleFrequency = [['top', 0], ['jungle', 0], ['mid', 0], ['adc', 0], ['support', 0]]
 
     for(const gameData of lGameData) {
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         if(playerData.role == 'SOLO' && playerData.lane == 'TOP'){
             lRoleFrequency[0][1] += 1
         }
@@ -70,7 +80,7 @@ module.exports.GetPlayerAverageCsKilledPerMin = (playerName, lGameData) => {
 
     for(const gameData of lGameData) {
 
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         csKilled += playerData.totalMinionsKilled
         console.log(playerData.totalMinionsKilled)
         timePlayed += gameData.info.gameDuration
@@ -84,7 +94,7 @@ module.exports.GetPlayerAverageDeathsPerMatch = (playerName, lGameData) => {
     let nDeath = 0
 
     for(const gameData of lGameData) {
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         nDeath += playerData.deaths
     }
 
@@ -96,7 +106,7 @@ module.exports.GetPlayerAverageKillsPerMatch = (playerName, lGameData) => {
     let nKill = 0
 
     for(const gameData of lGameData) {
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         nKill += playerData.kills
     }
 
@@ -108,7 +118,7 @@ module.exports.GetPlayerAverageAssistsPerMatch = (playerName, lGameData) => {
     let nAssist = 0
 
     for(const gameData of lGameData) {
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         nAssist += playerData.assists
     }
 
@@ -134,7 +144,7 @@ module.exports.GetPlayerMostPlayedChamps = async (playerName, lGameData) => {
     }
 
     for(const gameData of lGameData) {
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         lChamp[playerData.championName] += 1
     }
 
@@ -171,7 +181,7 @@ module.exports.GetPlayerWinDataWithSpecificChamp = (playerName, lGameData, champ
     }
 
     for(const gameData of lGameData) {
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         if(playerData.championName == championName){
             if(playerData.win){
                 champWinData.nWin += 1
@@ -201,7 +211,7 @@ module.exports.GetPlayerKdaDataWithSpecificChamp = (playerName, lGameData, champ
     }
 
     for(const gameData of lGameData) {
-        const playerData = LolApiUtils.GetPlayerDataFromGameData(playerName, gameData)
+        const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
         if(playerData.championName == championName){
             nTotalKill += playerData.kills
             nTotalDeath += playerData.deaths
@@ -216,5 +226,17 @@ module.exports.GetPlayerKdaDataWithSpecificChamp = (playerName, lGameData, champ
 
     return champKdaData
 }
+
+module.exports.GetTimePlayed = (lGameData) => {
+
+    let timePlayedInSeconds = 0
+
+    for(const gameData of lGameData) {
+        timePlayedInSeconds += gameData.info.gameDuration
+    }
+
+    return TimeUtils.GetFormattedElapsedTimeFromSeconds(timePlayedInSeconds)
+}
+
 
 //https://emoji.gg/emoji/8176-wr-jungle
