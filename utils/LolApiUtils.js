@@ -91,33 +91,42 @@ module.exports.GetPlayerRankData = async (lolApi, summoner_id, region) => {
 module.exports.GetCurrentGameData = async (lolApi, summonerId, region) => {
 
     console.log(region + summonerId)
+    let currentGameData
 
     await lolApi.get(region, 'spectator.getCurrentGameInfoBySummoner', summonerId).then(data => {
         console.log(data)
-        return data
+        currentGameData = data
     }).catch(err => {
         console.log(err)
     })
+
+    return currentGameData
 }
 
 module.exports.GetChampionNameFromId = async (id) => {
 
     let urlChampsData = "http://ddragon.leagueoflegends.com/cdn/12.10.1/data/en_US/champion.json"
     let settings = {method: "GET"}
+    let champName 
 
     await fetch(urlChampsData, settings)
     .then(res => res.json())
     .then((json) => {
 
-        console.log(json)
-
         let champsData = json.data
 
         for (let i in champsData){
 
+            console.log(champsData[i].id, id)
+
             if(champsData[i].key == id){
-                return champsData[i].name
+                console.log(champsData[i].id)
+                champName = champsData[i].id
             }
         }
     });
+
+    console.log("return")
+
+    return champName
 }

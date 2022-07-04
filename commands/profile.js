@@ -11,27 +11,40 @@ module.exports = {
     async run(client, message, args) {
 
         const res = new MessageEmbed()
-        
-        let UsernameLol, region, summonerId, profileIconId
-        await client.db.pget("SELECT region, username_lol FROM Users WHERE user_discord_id=?", {
-            1: message.author.id
+
+        let UsernameLol, region
+        if(args.length >= 2){
+            region = args[2]
+            UsernameLol = args.slice(2).join()
         }
-        ).then((row) => {
-            UsernameLol = row.username_lol
-            region = row.region
+        else{
+            await client.db.pget("SELECT region, username_lol FROM Users WHERE user_discord_id=?", {
+                1: message.author.id
+            }
+            ).then((row) => {
+
+                if(row == undefined){
+                    message.channel.send("You didn't specify an lol account. Do it !link")
+                }
+
+                UsernameLol = row.username_lol
+                region = row.region
+            }
+            ).catch((err) => {
+                console.log(err)
+                return
+            });
         }
-        ).catch((err) => {
-            console.log(err)
-            return
-        });
 
         console.log(UsernameLol)
 
+        let summonerId, profileIconId, puuid, summonerLevel
         await client.lolApi.get(region, 'summoner.getBySummonerName', UsernameLol).then(data => {
             console.log(data)
             puuid = data.puuid
             summonerId = data.id
             profileIconId = data.profileIconId
+            summonerLevel = data.summonerLevel
         })
 
         let l_game_id
@@ -56,6 +69,10 @@ module.exports = {
 
         res.setTitle(UsernameLol + "'s profile")
 
+        res.addField("Region", region.toUpperCase(), true)
+        res.addField("Level", summonerLevel + "", true)
+        res.addField("\u200B", "\u200B", true)
+
         let playedTime = LolStatsUtils.GetTimePlayed(lGameData)
         res.addField("Games played (last 30 days) :", (win_stats.n_lose+win_stats.n_win).toString() + " (" + playedTime + ")", true)
 
@@ -69,8 +86,8 @@ module.exports = {
         }
         res.addField("Roles :", roleFieldValue)
         
-        .addField("Average cs :", ""+averageCs+" cs/min")
-        .addField("Average KDA :", averageKills+"/"+averageDeaths+"/"+averageAssists)
+        .addField("Average KDA :", averageKills+"/"+averageDeaths+"/"+averageAssists, true)
+        .addField("Average cs :", ""+averageCs+" cs/min", true)
 
         for(const rankModeApiName in lRankModeData){
 
@@ -110,17 +127,40 @@ module.exports = {
 
         res.addField("Preferred champions :", preferredChampsFieldValue)
 
+
+        /* Current game field */
         let currentGameFieldValue = ""
         let currentGameData = await LolApiUtils.GetCurrentGameData(client.lolApi, summonerId, region)
         if(currentGameData == null){
-            currentGameFieldValue = "No game in progress"
+            currentGameFieldValue = "Currently not playing"
         }
         else{
             let playerData = LolStatsUtils.GetPlayerDataFromGameData(UsernameLol, currentGameData.participants)
-            currentGameFieldValue = currentGameData.gameMode + " Game with " + await LolApiUtils.GetChampionNameFromId(currentGameData.championId)
+            let gameMode = currentGameData.gameMode[0] + currentGameData.gameMode.toLowerCase().slice(1).toLowerCase()
+            let champName = await LolApiUtils.GetChampionNameFromId(playerData.championId)
+            currentGameFieldValue = gameMode + " with " + EmojiDiscordIds["Champions"]["champ_"+champName+"_lol"] + " "  + champName + " | *for " + TimeUtils.GetShortFormattedElapsedTimeFromSeconds(currentGameData.gameLength) + "*"	
         }
 
         res.addField("Game in progress :", currentGameFieldValue)
+
+
+        /* Last game field */
+        let lastGameFieldValue = ""
+
+        lastGameModePlayed = lGameData[0].info.gameMode.toLowerCase()
+        lastGameModePlayed = lastGameModePlayed[0].toUpperCase() + lastGameModePlayed.slice(1)
+
+        let timeElapsedFromGame = "*" + TimeUtils.GetShortFormattedElapsedTimeFromSeconds((Date.now() - lGameData[0].info.gameEndTimestamp) / 1000) + "*"
+
+        let playerData = LolStatsUtils.GetPlayerDataFromGameData(UsernameLol, lGameData[0].info.participants)
+
+        if(playerData.win){
+            lastGameFieldValue += ":green_circle: "
+        } else{
+            lastGameFieldValue += ":red_circle: "
+        }   
+        lastGameFieldValue += lastGameModePlayed + " as " + EmojiDiscordIds["Champions"]["champ_"+playerData.championName+"_lol"] + " " + playerData.championName + " with " + playerData.kills + "/" + playerData.deaths + "/" + playerData.assists + " and " + (playerData.totalMinionsKilled+playerData.neutralMinionsKilled) + " CS | " + timeElapsedFromGame + " ago"
+        res.addField("Last game :", lastGameFieldValue)
 
         res.setThumbnail("http://ddragon.leagueoflegends.com/cdn/12.10.1/img/profileicon/"+profileIconId+".png")
         res.setColor('#16a085')

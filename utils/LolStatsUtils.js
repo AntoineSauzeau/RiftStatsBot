@@ -37,14 +37,17 @@ module.exports.GetPlayerPreferredRoles = (playerName, lGameData) => {
     let lRoleFrequency = [['top', 0], ['jungle', 0], ['mid', 0], ['adc', 0], ['support', 0]]
 
     for(const gameData of lGameData) {
+
         const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
+        console.log(playerData.role+playerData.lane)
+
         if(playerData.role == 'SOLO' && playerData.lane == 'TOP'){
             lRoleFrequency[0][1] += 1
         }
         else if(playerData.role == 'NONE' && playerData.lane == 'JUNGLE'){
             lRoleFrequency[1][1] += 1
         }
-        else if(playerData.role == 'SOLO' && playerData.lane == 'MID'){
+        else if(playerData.role == 'SOLO' && playerData.lane == 'MIDDLE'){
             lRoleFrequency[2][1] += 1
         }
         else if(playerData.role == 'CARRY' && playerData.lane == 'BOTTOM') {
@@ -81,8 +84,7 @@ module.exports.GetPlayerAverageCsKilledPerMin = (playerName, lGameData) => {
     for(const gameData of lGameData) {
 
         const playerData = module.exports.GetPlayerDataFromGameData(playerName, gameData.info.participants)
-        csKilled += playerData.totalMinionsKilled
-        console.log(playerData.totalMinionsKilled)
+        csKilled += playerData.neutralMinionsKilled + playerData.totalMinionsKilled
         timePlayed += gameData.info.gameDuration
     }
 
@@ -235,7 +237,7 @@ module.exports.GetTimePlayed = (lGameData) => {
         timePlayedInSeconds += gameData.info.gameDuration
     }
 
-    return TimeUtils.GetFormattedElapsedTimeFromSeconds(timePlayedInSeconds)
+    return TimeUtils.GetLongFormattedElapsedTimeFromSeconds(timePlayedInSeconds)
 }
 
 

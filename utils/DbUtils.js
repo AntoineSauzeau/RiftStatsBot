@@ -29,4 +29,18 @@ module.exports.AddAlternativePromiseFunctions = (db) => {
             });
         });
     };
+
+    db.pall = (sql, params) => {
+
+        return new Promise((resolve, reject) => {
+            db.all(sql, params, (err, rows) => {
+                if(err) {
+                    reject(err)
+                }
+                else{
+                    resolve(rows)
+                }
+            });
+        });
+    };
 }
