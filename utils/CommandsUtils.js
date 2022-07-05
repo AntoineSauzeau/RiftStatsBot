@@ -8,4 +8,3 @@ module.exports.SetResponseEmbedDefaultValues = (message, embed) => {
     embed.setColor('#16a085')
 }
 
-module.exports 
