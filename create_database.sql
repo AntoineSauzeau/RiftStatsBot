@@ -5,8 +5,8 @@ CREATE TABLE Users (
     currentGameId CHAR(78)
 );
 
-CREATE TABLE SpyMod (
+CREATE TABLE SpyStatusPerGuild (
     guildId INT PRIMARY KEY,
     activated boolean DEFAULT False,
     channelId INT NOT NULL
-)
+);

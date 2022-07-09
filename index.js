@@ -6,6 +6,7 @@ const sqlite3 = require('sqlite3');
 const TeemoJS = require('teemojs')
 const Fs = require('fs')
 const DbUtils = require('./utils/DbUtils')
+const SpyModUtils = require('./utils/SpyModUtils')
 
 const client = new Client({
     intents: ['GUILDS', 'DIRECT_MESSAGES', 'GUILD_MESSAGES'],
@@ -39,7 +40,7 @@ client.db = new sqlite3.Database('database.db', (err) => {
 });
 
 DbUtils.AddAlternativePromiseFunctions(client.db)
-
+SpyModUtils.startSpyLoop(client)
 
 
 client.lolApi = TeemoJS(config.lol.token);

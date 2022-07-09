@@ -1,7 +1,7 @@
 const { MessageEmbed } = require('discord.js')
 const LolApiUtils = require('../utils/LolApiUtils')
 const LolStatsUtils = require('../utils/LolStatsUtils')
-const EmojiDiscordIds = require('../emoji_discord_ids.json')
+const EmojiDiscordIds = require('../emojiDiscordIds.json')
 const TimeUtils = require('../utils/TimeUtils')
 const CommandsUtils = require('../utils/CommandsUtils')
 
