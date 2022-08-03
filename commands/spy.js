@@ -14,16 +14,31 @@ module.exports = {
                     $guildId: message.guild.id,
                     $activated: true,
                     $channelId: message.channel.id
+                }).then(() => {
+                    message.channel.send("Le mode espion a bien été activé dans ce channel !")
                 }).catch(err => {
                     console.log(err)
                 });
             }
             else{
-                await client.prun("UPDATE SpyStatusPerGuild SET activated=1 AND channelId=$channelId", {
-                    $channelId: message.channel.id
-                }).catch(err => {
-                    console.log(err)
-                });
+                if(row.activated == 1){
+                    await client.db.prun("UPDATE SpyStatusPerGuild SET activated=0 AND channelId=$channelId", {
+                        $channelId: message.channel.id
+                    }).then(() => {
+                        message.channel.send("Le mode espion a été désactivé dans ce channel")
+                    }).catch(err => {
+                        console.log(err)
+                    });
+                }
+                else if(row.activated == 0){
+                    await client.db.prun("UPDATE SpyStatusPerGuild SET activated=1 AND channelId=$channelId", {
+                        $channelId: message.channel.id
+                    }).then(() => {
+                        message.channel.send("Le mode espion a bien été activé dans ce channel !")
+                    }).catch(err => {
+                        console.log(err)
+                    });
+                }
             }
 
         }).catch(err => {

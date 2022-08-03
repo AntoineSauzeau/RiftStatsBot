@@ -17,8 +17,20 @@ module.exports.startSpyLoop = async (client) => {
 
                 let summonerId
                 await client.lolApi.get(region, 'summoner.getBySummonerName', usernameLol).then(data => {
-                    summonerId = data.id
+                    console.log(usernameLol)
+                    if(!data){
+                        summonerId == undefined 
+                    }
+                    else{
+                        summonerId = data.id
+                    }
+                }).catch(err => {
+                    console.log(err)
                 });
+
+                if(!summonerId){
+                    continue
+                }
 
                 let currentGameData = await LolApiUtils.GetCurrentGameData(client.lolApi, summonerId, region)
                 if(currentGameData != undefined && currentGameId != currentGameData.gameId){

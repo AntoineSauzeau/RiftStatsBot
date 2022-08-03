@@ -40,7 +40,7 @@ client.db = new sqlite3.Database('database.db', (err) => {
 });
 
 DbUtils.AddAlternativePromiseFunctions(client.db)
-SpyModUtils.startSpyLoop(client)
+//SpyModUtils.startSpyLoop(client)
 
 
 client.lolApi = TeemoJS(config.lol.token);
